@@ -68,7 +68,19 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
         */
     }
 
-    // Check if the Custom value CCCD is written to and that the value is the appropriate length, i.e 2 bytes.
+    // Custom Value Characteristic Written to.
+    if (p_evt_write->handle == p_cus->custom_value_handles_123.value_handle)
+    {
+        // Set value to p_cus->value_123 when new value was written to characteristic
+        ble_gatts_value_t rx_data;
+        rx_data.len = sizeof(p_cus->value_123);
+        rx_data.offset = 0;
+        rx_data.p_value = (uint8_t*)&(p_cus->value_123);
+
+        sd_ble_gatts_value_get(p_cus->conn_handle, p_cus->custom_value_handles_123.value_handle, &rx_data);
+    }
+
+    // Check if the Custom value CCCD is written tvalue_123o and that the value is the appropriate length, i.e 2 bytes.
     if ((p_evt_write->handle == p_cus->custom_value_handles.cccd_handle)
         && (p_evt_write->len == 2)
        )
@@ -195,6 +207,67 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
     return NRF_SUCCESS;
 }
 
+static uint32_t custom_value_123_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
+{
+    uint32_t            err_code;
+    ble_gatts_char_md_t char_md;
+    ble_gatts_attr_md_t cccd_md;
+    ble_gatts_attr_t    attr_char_value;
+    ble_uuid_t          ble_uuid;
+    ble_gatts_attr_md_t attr_md;
+
+    // Add Custom Value characteristic
+    memset(&cccd_md, 0, sizeof(cccd_md));
+
+    //  Read  operation on cccd should be possible without authentication.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+    
+    cccd_md.write_perm = p_cus_init->custom_value_char_attr_md.cccd_write_perm;
+    cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
+
+    memset(&char_md, 0, sizeof(char_md));
+
+    char_md.char_props.read   = 1;
+    char_md.char_props.write  = 1;
+    // char_md.char_props.notify = 1; 
+    char_md.p_char_user_desc  = NULL;
+    char_md.p_char_pf         = NULL;
+    char_md.p_user_desc_md    = NULL;
+    char_md.p_cccd_md         = &cccd_md; 
+    char_md.p_sccd_md         = NULL;
+		
+    ble_uuid.type = p_cus->uuid_type;
+    ble_uuid.uuid = CUSTOM_VALUE_123_CHAR_UUID;
+
+    memset(&attr_md, 0, sizeof(attr_md));
+
+    attr_md.read_perm  = p_cus_init->custom_value_char_attr_md.read_perm;
+    attr_md.write_perm = p_cus_init->custom_value_char_attr_md.write_perm;
+    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+    attr_md.rd_auth    = 0;
+    attr_md.wr_auth    = 0;
+    attr_md.vlen       = 0;
+
+    memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+    attr_char_value.p_uuid    = &ble_uuid;
+    attr_char_value.p_attr_md = &attr_md;
+    attr_char_value.init_len  = sizeof(p_cus->value_123);
+    attr_char_value.init_offs = 0;
+    attr_char_value.max_len   = sizeof(p_cus->value_123);
+
+    err_code = sd_ble_gatts_characteristic_add(p_cus->service_handle, &char_md,
+                                               &attr_char_value,
+                                               &p_cus->custom_value_handles_123);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    return NRF_SUCCESS;
+}
+
 uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
 {
     if (p_cus == NULL || p_cus_init == NULL)
@@ -223,9 +296,12 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     {
         return err_code;
     }
-
+    
     // Add Custom Value characteristic
-    return custom_value_char_add(p_cus, p_cus_init);
+    err_code = custom_value_char_add(p_cus, p_cus_init);
+    err_code = custom_value_123_char_add(p_cus, p_cus_init);
+
+    return err_code;
 }
 
 uint32_t ble_cus_custom_value_update(ble_cus_t * p_cus, uint8_t custom_value)

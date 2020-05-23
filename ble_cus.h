@@ -26,6 +26,7 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
 
 #define CUSTOM_SERVICE_UUID               0x1400
 #define CUSTOM_VALUE_CHAR_UUID            0x1401
+#define CUSTOM_VALUE_123_CHAR_UUID        0x1402
 																					
 /**@brief Custom Service event type. */
 typedef enum
@@ -64,8 +65,11 @@ struct ble_cus_s
     ble_cus_evt_handler_t         evt_handler;                    /**< Event handler to be called for handling events in the Custom Service. */
     uint16_t                      service_handle;                 /**< Handle of Custom Service (as provided by the BLE stack). */
     ble_gatts_char_handles_t      custom_value_handles;           /**< Handles related to the Custom Value characteristic. */
+    ble_gatts_char_handles_t      custom_value_handles_123;
     uint16_t                      conn_handle;                    /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
     uint8_t                       uuid_type; 
+
+    uint16_t                      value_123;
 };
 
 /**@brief Function for initializing the Custom Service.

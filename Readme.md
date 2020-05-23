@@ -1,3 +1,12 @@
+Comment to repo fork:
+-------
+The latest commit demonstrates how to add another one characteristic to BLE service.
+
+1. Clone repo to <SDK_PATH>/examples/ble_peripheral
+2. To compile and flash with GCC and nRF52-DK ./pca10040/s132/armgcc/scr.sh can be used
+
+
+
 nRF52 Bluetooth Course 
 -------
 
